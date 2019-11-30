@@ -1,0 +1,38 @@
+#https://www.linkedin.com/pulse/some-dplyr-data-manipulation-tricks-al-yazdani/?trackingId=ZGjjQRx%2FNYQhuu1e3W7MCw%3D%3D
+
+library(dplyr)
+data("iris") 
+summary(iris) 
+
+#numeric column are Sepal.Length, Sepal.Width, Petal.Length, Petal.Width, Species
+#the three factor levels in column Species are: setosa, versicolor, virginica
+
+df1<-iris %>% group_by(Species) %>% summarise_all(.,sd) %>% 
+#so far only calculating all columns stdev 
+rename_at(.,vars(-contains("Species")),funs( paste0(.,".stdev"))) %>% 
+#rename columns using stdev suffix
+inner_join(.,iris,by="Species") 
+#augment the new columns to original data
+
+head(df1)
+
+tail(df1)
+
+######################################################################
+df2<-cbind.data.frame(df1,
+                      mean=apply(df1 %>% select(-contains("stdev"),-contains("Species")),1,mean),
+                      #only applies mean to the original iris numerical columns
+                      length_diff=apply(df1 %>% select(contains("Length"),-contains("stdev")),1,function(x)max(x)-min(x)),
+                      #difference between sepal and petal lengths 
+                      width_sq_sum=apply(df1 %>% select(contains("Width"),-contains("stdev")),1,function(x)sum(x^2)) 
+                      #squared sum of sepal and petal widths
+                      ) %>% 
+  mutate(.,width_sq_sum_sqrt=sqrt(width_sq_sum)) %>% 
+#adding square root of last calculted column
+  select(Species,contains("Sepal"),contains("Petal"),everything()) 
+#arranging columns
+
+
+head(df2)
+
+
